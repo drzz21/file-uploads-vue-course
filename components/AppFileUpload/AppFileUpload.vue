@@ -23,10 +23,28 @@ function fileIsTooBig(file: File): boolean {
 	return file.size > MAX_FILE_SIZE;
 }
 
+//agregamos este tipo para poder manejarlo en las computed properties
+//para que la propertie sepa el valor que retorna
+type Preview = {
+	type: string;
+	url: string;
+} | null;
 //creamos esta propiedad computada, para convertir en tiempo
 //real los archivos de imagen en urls que podemos usar y previsualizarlas
-const previews = computed(() => {
+//agregamos el tipado
+const previews = computed<Preview[]>((oldPreviews) => {
 	return files.value.map((file) => {
+
+		//revisamos nuestro valor anterior cuando cambie la propertie
+		//y revocamos las url para evitar problemas de memoria
+		if(oldPreviews){
+			oldPreviews.map((oldPreview)=>{
+				if(oldPreview?.url){
+					URL.revokeObjectURL(oldPreview.url);
+				}
+			});
+		}
+
 		//si el archivo es de tipo imagen, retornamos
 		//la url con la vista previa, usando esta funcion nativa de js
 		//modificamos la funcion para que genere los urls de videos e imagenes
@@ -38,7 +56,7 @@ const previews = computed(() => {
 				type: 'image',
 				url: URL.createObjectURL(file),
 			}
-			return URL.createObjectURL(file);
+			// return URL.createObjectURL(file);
 		} else if(file.type.startsWith('video/')){
 			return{
 				type: 'video',
@@ -47,6 +65,17 @@ const previews = computed(() => {
 		} else{ 
 			//sino retornamos null para no mostrarlas
 			return null;
+		}
+	});
+});
+
+//al desmontar el componente de igual forma liberamos las url
+//para evitar problemas de memoria
+onUnmounted(()=>{
+	//liberamos la memoria de los object urls creados
+	previews.value.forEach((preview)=>{
+		if(preview?.url){
+			URL.revokeObjectURL(preview.url);
 		}
 	});
 });
@@ -98,7 +127,7 @@ function handleFileSelect(event: Event) {
 			/>
 
 			<!-- agregamos el tag de video para previsualizar videos -->
-			 agregamos autoplay para que se reprodusca automaticamente, loop para que se repita y controls para mostrar controles de reproduccionque el usuario pueda usar
+			 <!-- agregamos autoplay para que se reprodusca automaticamente, loop para que se repita y controls para mostrar controles de reproduccionque el usuario pueda usar -->
 
 			<video v-if="previews[index]?.type === 'video'" autoplay loop controls :src="previews[index]?.url" >
 
