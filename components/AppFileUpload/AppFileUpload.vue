@@ -29,9 +29,22 @@ const previews = computed(() => {
 	return files.value.map((file) => {
 		//si el archivo es de tipo imagen, retornamos
 		//la url con la vista previa, usando esta funcion nativa de js
+		//modificamos la funcion para que genere los urls de videos e imagenes
 		if (file.type.startsWith('image/')) {
+			return{
+				//retornamos un objeto para agregar
+				//metadata del tipo de archivo
+				//para manejarlo correctamente al mostrarlo
+				type: 'image',
+				url: URL.createObjectURL(file),
+			}
 			return URL.createObjectURL(file);
-		} else {
+		} else if(file.type.startsWith('video/')){
+			return{
+				type: 'video',
+				url: URL.createObjectURL(file),
+			}
+		} else{ 
 			//sino retornamos null para no mostrarlas
 			return null;
 		}
@@ -77,11 +90,19 @@ function handleFileSelect(event: Event) {
 
 			<!-- vamos a previsualizar nuestra imagen, usando, la propiedad computada
 			 y el indice de nuestro v-for enviandolo a dicha propiedad computada -->
-			<img
-				v-if="previews[index]"
-				:src="previews[index]"
+			<!-- modificamos para agregar los nuevos atributos de tipo y url -->
+			 <img
+				v-if="previews[index]?.type === 'image'"
+				:src="previews[index]?.url"
 				:alt="file.name"
 			/>
+
+			<!-- agregamos el tag de video para previsualizar videos -->
+			 agregamos autoplay para que se reprodusca automaticamente, loop para que se repita y controls para mostrar controles de reproduccionque el usuario pueda usar
+
+			<video v-if="previews[index]?.type === 'video'" autoplay loop controls :src="previews[index]?.url" >
+
+			</video>
 
 			<!-- imprimos este mensaje de error si el archivo es muy grande -->
 
