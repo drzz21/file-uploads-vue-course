@@ -2,7 +2,10 @@
 const files = ref<File[]>([]);
 
 //agregamos una lista de mimetypes permitidos
-const allowedFileTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+//en la documentacion viene como podemos manejar el atributo que mandamos en accept
+//podemos usar asteriscos como wildcards para definir un grupo de archivos
+//o tambien podemos usar en este caso este codigo que nos permite aceptar archivos de word
+const allowedFileTypes = ['image/*','.doc,.docx,.xml,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 
 function handleFileSelect(event: Event) {
 	//accedemos al elemento que disparó el evento, indicamos a ts que es un htmlInputElement
@@ -23,7 +26,8 @@ function handleFileSelect(event: Event) {
 		<!-- follow along here -->
 		<!-- input oculto con atributo multiple para seleccionar varios archivos -->
 		<label class="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer">
-			<input type="file" multiple @change="handleFileSelect" hidden />
+			<!-- usamos accept que es la forma descrita en la documentacion para listar el tipo de archivos a aceptar -->
+			<input type="file" :accept="allowedFileTypes.join(',')" multiple @change="handleFileSelect" hidden />
 			Upload
 		</label>
 		<p v-for="file in files" :key="file.name">
@@ -31,9 +35,9 @@ function handleFileSelect(event: Event) {
 			}}
 			<!-- si el archivo que vamos a mostrar no está en los mimetypes permitidos
 			mostramos un mensaje de error -->
-			<span v-if="!allowedFileTypes.includes(file.type)" class="text-red-500">
+			<!-- <span v-if="!allowedFileTypes.includes(file.type)" class="text-red-500">
 				File type not allowed
-			</span>
+			</span> -->
 		</p>
 	</div>
 </template>
