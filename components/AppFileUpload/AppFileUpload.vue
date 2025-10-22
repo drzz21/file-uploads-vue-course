@@ -23,6 +23,21 @@ function fileIsTooBig(file: File): boolean {
 	return file.size > MAX_FILE_SIZE;
 }
 
+//creamos esta propiedad computada, para convertir en tiempo
+//real los archivos de imagen en urls que podemos usar y previsualizarlas
+const previews = computed(() => {
+	return files.value.map((file) => {
+		//si el archivo es de tipo imagen, retornamos
+		//la url con la vista previa, usando esta funcion nativa de js
+		if (file.type.startsWith('image/')) {
+			return URL.createObjectURL(file);
+		} else {
+			//sino retornamos null para no mostrarlas
+			return null;
+		}
+	});
+});
+
 function handleFileSelect(event: Event) {
 	//accedemos al elemento que disparó el evento, indicamos a ts que es un htmlInputElement
 	//con esto podemos acceder a la propiedad files
@@ -52,13 +67,21 @@ function handleFileSelect(event: Event) {
 			/>
 			Upload
 		</label>
-		<p v-for="file in files" :key="file.name">
+		<p v-for="(file, index) in files" :key="file.name">
 			{{ file.name }}
 			<!-- si el archivo que vamos a mostrar no está en los mimetypes permitidos
 			mostramos un mensaje de error -->
 			<!-- <span v-if="!allowedFileTypes.includes(file.type)" class="text-red-500">
 				File type not allowed
 			</span> -->
+
+			<!-- vamos a previsualizar nuestra imagen, usando, la propiedad computada
+			 y el indice de nuestro v-for enviandolo a dicha propiedad computada -->
+			<img
+				v-if="previews[index]"
+				:src="previews[index]"
+				:alt="file.name"
+			/>
 
 			<!-- imprimos este mensaje de error si el archivo es muy grande -->
 
