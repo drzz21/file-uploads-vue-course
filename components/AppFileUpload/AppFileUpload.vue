@@ -34,12 +34,11 @@ type Preview = {
 //agregamos el tipado
 const previews = computed<Preview[]>((oldPreviews) => {
 	return files.value.map((file) => {
-
 		//revisamos nuestro valor anterior cuando cambie la propertie
 		//y revocamos las url para evitar problemas de memoria
-		if(oldPreviews){
-			oldPreviews.map((oldPreview)=>{
-				if(oldPreview?.url){
+		if (oldPreviews) {
+			oldPreviews.map((oldPreview) => {
+				if (oldPreview?.url) {
 					URL.revokeObjectURL(oldPreview.url);
 				}
 			});
@@ -49,20 +48,20 @@ const previews = computed<Preview[]>((oldPreviews) => {
 		//la url con la vista previa, usando esta funcion nativa de js
 		//modificamos la funcion para que genere los urls de videos e imagenes
 		if (file.type.startsWith('image/')) {
-			return{
+			return {
 				//retornamos un objeto para agregar
 				//metadata del tipo de archivo
 				//para manejarlo correctamente al mostrarlo
 				type: 'image',
 				url: URL.createObjectURL(file),
-			}
+			};
 			// return URL.createObjectURL(file);
-		} else if(file.type.startsWith('video/')){
-			return{
+		} else if (file.type.startsWith('video/')) {
+			return {
 				type: 'video',
 				url: URL.createObjectURL(file),
-			}
-		} else{ 
+			};
+		} else {
 			//sino retornamos null para no mostrarlas
 			return null;
 		}
@@ -71,16 +70,16 @@ const previews = computed<Preview[]>((oldPreviews) => {
 
 //al desmontar el componente de igual forma liberamos las url
 //para evitar problemas de memoria
-onUnmounted(()=>{
+onUnmounted(() => {
 	//liberamos la memoria de los object urls creados
-	previews.value.forEach((preview)=>{
-		if(preview?.url){
+	previews.value.forEach((preview) => {
+		if (preview?.url) {
 			URL.revokeObjectURL(preview.url);
 		}
 	});
 });
 
-function handleFileSelect(event: Event) {
+async function handleFileSelect(event: Event) {
 	//accedemos al elemento que disparó el evento, indicamos a ts que es un htmlInputElement
 	//con esto podemos acceder a la propiedad files
 	const input = event.target as HTMLInputElement;
@@ -88,6 +87,29 @@ function handleFileSelect(event: Event) {
 	//lo convertimos a un array con Array.from
 	//si por algo es undefined, le pasamos un array vacío para evitar errores
 	const fileAsArray = Array.from(input?.files || []); // FileList
+
+	//lo recomendado para subir archivos
+	//porque automaticamente agrega el multipart/form-data
+	const formData = new FormData();
+	//agregamos los archivos al formdata
+
+	fileAsArray.map((file) => {
+		formData.append(file.name, file);
+	});
+
+	//hacemos el fetch a nuestra api de nuxt,
+	//enviando el formdata como body
+	//y usando el metodo post
+
+	const response = await fetch('/api/upload', {
+		method: 'POST',
+		body: formData,
+	});
+
+	//respondemos la respuesta
+
+	console.log(response);
+
 	//concatenamos los archivos seleccionados a nuestra referencia reactiva
 	files.value = files.value.concat(fileAsArray);
 	// console.log(event);
@@ -120,18 +142,22 @@ function handleFileSelect(event: Event) {
 			<!-- vamos a previsualizar nuestra imagen, usando, la propiedad computada
 			 y el indice de nuestro v-for enviandolo a dicha propiedad computada -->
 			<!-- modificamos para agregar los nuevos atributos de tipo y url -->
-			 <img
+			<img
 				v-if="previews[index]?.type === 'image'"
 				:src="previews[index]?.url"
 				:alt="file.name"
 			/>
 
 			<!-- agregamos el tag de video para previsualizar videos -->
-			 <!-- agregamos autoplay para que se reprodusca automaticamente, loop para que se repita y controls para mostrar controles de reproduccionque el usuario pueda usar -->
+			<!-- agregamos autoplay para que se reprodusca automaticamente, loop para que se repita y controls para mostrar controles de reproduccionque el usuario pueda usar -->
 
-			<video v-if="previews[index]?.type === 'video'" autoplay loop controls :src="previews[index]?.url" >
-
-			</video>
+			<video
+				v-if="previews[index]?.type === 'video'"
+				autoplay
+				loop
+				controls
+				:src="previews[index]?.url"
+			></video>
 
 			<!-- imprimos este mensaje de error si el archivo es muy grande -->
 
