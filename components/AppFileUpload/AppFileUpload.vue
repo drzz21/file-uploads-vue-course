@@ -162,8 +162,19 @@ async function handleFileSelect(event: Event) {
 
 	console.log(response);
 
+	// manejamos la referencia reactiva de archivos
+	//si son archivos multiples concatenamos los archivos cargados
+	//para que se puedan agregar varios, si no son multiples simplemente
+	//reemplazamos la variable con el nuevo valor
+
+	if (props.multiple) {
+		files.value = files.value.concat(fileAsArray);
+	} else {
+		files.value = fileAsArray;
+	}
+
 	//concatenamos los archivos seleccionados a nuestra referencia reactiva
-	files.value = files.value.concat(fileAsArray);
+
 	// console.log(event);
 }
 </script>
@@ -172,18 +183,45 @@ async function handleFileSelect(event: Event) {
 	<div>
 		<!-- follow along here -->
 		<!-- input oculto con atributo multiple para seleccionar varios archivos -->
-		<label class="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer">
-			<!-- usamos accept que es la forma descrita en la documentacion para listar el tipo de archivos a aceptar -->
-			<!-- agregamos las referencias a las props -->
+		<!-- <label class="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer"> -->
+		<!-- usamos accept que es la forma descrita en la documentacion para listar el tipo de archivos a aceptar -->
+		<!-- agregamos las referencias a las props -->
+		<!-- quitamos nuestro label porque usaremos un div ahora -->
+		<!-- con estos estilos para posicionar el input dentro de ese div -->
+		<!-- con inset 0 tenemos top 0, right 0, bottom 0 y left 0 -->
+		<div class="relative border border-dashed p-5 rounded text-center">
 			<input
+				class="absolute inset-0 opacity-0"
 				type="file"
 				:accept="accept?.join(',')"
 				:multiple="multiple"
 				@change="handleFileSelect"
-				hidden
 			/>
-			Upload
-		</label>
+
+			<!-- esto se agregó con ia usando este prompt -->
+			<!-- add a file upload svg -->
+
+			<svg
+				class="w-12 h-12 mx-auto mb-4 text-gray-400"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+				></path>
+			</svg>
+
+			<!-- añadimos texto para nuestro upload -->
+			<span class="text-blue-500">Upload files</span>
+			<span> or drag an drop</span>
+		</div>
+		<!-- Upload -->
+		<!-- </label> -->
 		<p v-for="(file, index) in files" :key="file.name">
 			{{ file.name }}
 			<!-- si el archivo que vamos a mostrar no está en los mimetypes permitidos
