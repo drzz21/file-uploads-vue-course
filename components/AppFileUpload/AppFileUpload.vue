@@ -1,11 +1,16 @@
-<script setup lang="ts">
-const files = ref<File[]>([]);
+<!-- se mueve a nuevo script porque las props del setup no pueden hacer referencia 
+la constante si está dentro del mismo setup, hay que moverlo a otro script sin setup -->
 
+<script lang="ts">
 const allowedFileTypes = [
 	'image/*',
 	'video/*',
 	'.doc,.docx,.xml,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
+</script>
+
+<script setup lang="ts">
+const files = ref<File[]>([]);
 
 // agregamos las props con valores por defecto para las siguientes variables usadas en nuestro input
 
@@ -145,7 +150,7 @@ async function handleFileSelect(event: Event) {
 	//usaremos la conversiona  json del fetch normal para ilustrar el ejemplo
 	//para este caso especifico
 
-	const data = await response.json() as {
+	const data = (await response.json()) as {
 		files: { filename: string; url: string }[];
 	};
 
