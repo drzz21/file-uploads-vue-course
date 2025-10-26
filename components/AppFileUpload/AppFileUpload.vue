@@ -263,85 +263,89 @@ async function handleFileSelect(event: Event) {
 		<!-- </label> -->
 		
 		<!-- Files Preview Section -->
-		<div v-if="files.length > 0" class="mt-6 space-y-4">
+		<div v-if="files.length > 0" class="mt-4 space-y-3">
 			<div 
 				v-for="(file, index) in files" 
 				:key="file.name"
-				class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+				class="bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors duration-200"
 			>
-				<div class="p-4 @md:p-5">
-					<!-- File Info Header -->
-					<div class="flex items-start gap-3 mb-3">
-						<div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-							<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-							</svg>
-						</div>
-						<div class="flex-1 min-w-0">
-							<p class="text-sm @md:text-base font-medium text-gray-900 truncate">
-								{{ file.name }}
-							</p>
-							<p class="text-xs @md:text-sm text-gray-500 mt-0.5">
-								{{ (file.size / 1024).toFixed(2) }} KB
-							</p>
-						</div>
-					</div>
-
-					<!-- si el archivo que vamos a mostrar no está en los mimetypes permitidos
-					mostramos un mensaje de error -->
-					<!-- <span v-if="!allowedFileTypes.includes(file.type)" class="text-red-500">
-						File type not allowed
-					</span> -->
-
-					<!-- vamos a previsualizar nuestra imagen, usando, la propiedad computada
-					 y el indice de nuestro v-for enviandolo a dicha propiedad computada -->
-					<!-- modificamos para agregar los nuevos atributos de tipo y url -->
-					<img
-						v-if="previews[index]?.type === 'image'"
-						:src="previews[index]?.url"
-						:alt="file.name"
-						class="w-full h-auto rounded-lg object-cover max-h-64 @md:max-h-96 border border-gray-200"
-					>
-
-					<!-- agregamos el tag de video para previsualizar videos -->
-					<!-- agregamos autoplay para que se reprodusca automaticamente, loop para que se repita y controls para mostrar controles de reproduccionque el usuario pueda usar -->
-
-					<video
-						v-if="previews[index]?.type === 'video'"
-						autoplay
-						loop
-						controls
-						:src="previews[index]?.url"
-						class="w-full h-auto rounded-lg max-h-64 @md:max-h-96 border border-gray-200"
-					/>
-
-					<!-- imprimos este mensaje de error si el archivo es muy grande -->
-					<div v-if="fileIsTooBig(file)" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-						<div class="flex items-start gap-2">
-							<svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-								<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-							</svg>
-							<span class="text-sm text-red-700 font-medium">
-								File is too big. File must be no larger than {{ maxMb }}MB
-							</span>
-						</div>
-					</div>
-					
-					<!-- mostramos el mensaje de error si el tipo de archivo no es aceptado -->
-					<div v-if="!attrAccept(file, accept)" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-						<div class="flex items-start gap-2">
-							<svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-								<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-							</svg>
-							<div class="flex-1">
-								<p class="text-sm text-red-700 font-medium">
-									File type is not accepted.
-								</p>
-								<p class="text-xs text-red-600 mt-1">
-									Acceptable types: {{ accept?.join(', ') }}
-								</p>
+				<div class="p-3 @md:p-4">
+					<!-- Horizontal Layout: Thumbnail + Info + Status + Close -->
+					<div class="flex items-center gap-3">
+						<!-- Thumbnail -->
+						<div class="flex-shrink-0">
+							<!-- Image Preview -->
+							<img
+								v-if="previews[index]?.type === 'image'"
+								:src="previews[index]?.url"
+								:alt="file.name"
+								class="w-12 h-12 rounded-lg object-cover border border-gray-200"
+							>
+							
+							<!-- Video Preview -->
+							<div v-else-if="previews[index]?.type === 'video'" class="w-12 h-12 rounded-lg overflow-hidden border border-gray-200">
+								<video
+									:src="previews[index]?.url"
+									class="w-full h-full object-cover"
+								/>
+							</div>
+							
+							<!-- Default File Icon -->
+							<div v-else class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+								<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+								</svg>
 							</div>
 						</div>
+
+						<!-- File Info -->
+						<div class="flex-1 min-w-0">
+							<p class="text-sm font-medium text-gray-900 truncate">
+								{{ file.name }}
+							</p>
+							<p class="text-xs text-gray-500 mt-0.5">
+								{{ (file.size / (1024 * 1024)).toFixed(2) }} MB
+							</p>
+						</div>
+
+						<!-- Status or Error -->
+						<div class="flex-shrink-0">
+							<!-- Error State -->
+							<div v-if="fileIsTooBig(file) || !attrAccept(file, accept)" class="text-red-500">
+								<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+								</svg>
+							</div>
+							
+							<!-- Success State -->
+							<div v-else class="flex items-center gap-2">
+								<svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+								</svg>
+								<span class="text-xs text-green-600 font-medium">Done</span>
+							</div>
+						</div>
+
+						<!-- Close Button -->
+						<button 
+							type="button"
+							class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+							@click="files.splice(index, 1)"
+						>
+							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</button>
+					</div>
+
+					<!-- Error Messages (Below the main row) -->
+					<div v-if="fileIsTooBig(file) || !attrAccept(file, accept)" class="mt-2 ml-15">
+						<p v-if="fileIsTooBig(file)" class="text-xs text-red-600">
+							File is too big. Must be no larger than {{ maxMb }}MB
+						</p>
+						<p v-if="!attrAccept(file, accept)" class="text-xs text-red-600">
+							File type not accepted. Acceptable: {{ accept?.join(', ') }}
+						</p>
 					</div>
 				</div>
 			</div>
