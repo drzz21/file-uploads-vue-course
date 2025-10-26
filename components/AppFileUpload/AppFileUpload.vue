@@ -2,6 +2,10 @@
 la constante si está dentro del mismo setup, hay que moverlo a otro script sin setup -->
 
 <script lang="ts">
+// se importa attrAccept para la validacion de los archivos
+//seleccionados en el file input
+import attrAccept from 'attr-accept';
+
 const allowedFileTypes = [
 	'image/*',
 	'video/*',
@@ -11,6 +15,11 @@ const allowedFileTypes = [
 
 <script setup lang="ts">
 const files = ref<File[]>([]);
+
+// se crea variable auxiliar para manejar el estado de drag and drop
+// cuando se esté arrastrando un archivo sobre el area del input
+// se usará para cambiar estilos
+const isDragging = ref(false);
 
 // agregamos las props con valores por defecto para las siguientes variables usadas en nuestro input
 
@@ -23,7 +32,7 @@ const props = withDefaults(
 	{
 		accept: () => allowedFileTypes,
 		maxMb: 5,
-		multiple: false,
+		multiple: true,
 	}
 );
 
@@ -131,17 +140,30 @@ async function handleFileSelect(event: Event) {
 	//agregamos los archivos al formdata
 
 	fileAsArray.map((file) => {
-		formData.append(file.name, file);
+		//solo se agragrán al form data los archivos
+		//validos en formato y tamaño
+		if (attrAccept(file, props.accept) && !fileIsTooBig(file)) {
+			formData.append(file.name, file);
+		}
 	});
+
+	//si hay al menos un archivo en el formdata hacemos el fetch
+	if (Array.from(formData.values()).length) {
+		const response = await fetch('/api/upload', {
+			method: 'POST',
+			body: formData,
+		});
+
+		const data = (await response.json()) as {
+			files: { filename: string; url: string }[];
+		};
+
+		emit('uploaded:files', data.files);
+	}
 
 	//hacemos el fetch a nuestra api de nuxt,
 	//enviando el formdata como body
 	//y usando el metodo post
-
-	const response = await fetch('/api/upload', {
-		method: 'POST',
-		body: formData,
-	});
 
 	//se usa $fetch porque es la forma recomendada en nuxt
 	//para hacer peticiones http, maneja automaticamente
@@ -150,23 +172,19 @@ async function handleFileSelect(event: Event) {
 	//usaremos la conversiona  json del fetch normal para ilustrar el ejemplo
 	//para este caso especifico
 
-	const data = (await response.json()) as {
-		files: { filename: string; url: string }[];
-	};
-
 	//emitimos el evento con los archivos subidos
-
-	emit('uploaded:files', data.files);
 
 	//respondemos la respuesta
 
-	console.log(response);
+	// console.log(response);
 
 	// manejamos la referencia reactiva de archivos
 	//si son archivos multiples concatenamos los archivos cargados
 	//para que se puedan agregar varios, si no son multiples simplemente
 	//reemplazamos la variable con el nuevo valor
 
+	//este codigo queda fuera del if porque es el que nos sirve
+	//para previsualizar los archivos, es parecido a un optimistic update
 	if (props.multiple) {
 		files.value = files.value.concat(fileAsArray);
 	} else {
@@ -189,7 +207,19 @@ async function handleFileSelect(event: Event) {
 		<!-- quitamos nuestro label porque usaremos un div ahora -->
 		<!-- con estos estilos para posicionar el input dentro de ese div -->
 		<!-- con inset 0 tenemos top 0, right 0, bottom 0 y left 0 -->
-		<div class="relative border border-dashed p-5 rounded text-center">
+		<!-- agregamos estilos condicionales para cuando se esté arrastrando un archivo sobre el area del input -->
+		<!-- manejamos la inicializacion de la variable isDragging en true o false
+		  dependiendo del estatus del drag and drop  -->
+		<div
+			class="relative border border-dashed p-5 rounded text-center"
+			:class="{
+				'border-blue-500 bg-blue-50': isDragging,
+			}"
+			@dragenter="($event) => (isDragging = true)"
+			@dragover="($event) => (isDragging = true)"
+			@dragleave="($event) => (isDragging = false)"
+			@drop="($event) => (isDragging = false)"
+		>
 			<input
 				class="absolute inset-0 opacity-0"
 				type="file"
@@ -256,6 +286,11 @@ async function handleFileSelect(event: Event) {
 				>File is too big. File must be no larger than
 				{{ maxMb }}MB</span
 			>
+			<!-- mostramos el mensaje de error si el tipo de archivo no es aceptado -->
+			<span v-if="!attrAccept(file, accept)" class="text-red-500">
+				File type is not accepted. Accetpable types includes
+				{{ accept?.join(', ') }}
+			</span>
 		</p>
 	</div>
 </template>
