@@ -1,26 +1,58 @@
 <script setup lang="ts">
 const files = ref<File[]>([]);
 
-//agregamos una lista de mimetypes permitidos
-//en la documentacion viene como podemos manejar el atributo que mandamos en accept
-//podemos usar asteriscos como wildcards para definir un grupo de archivos
-//o tambien podemos usar en este caso este codigo que nos permite aceptar archivos de word
 const allowedFileTypes = [
 	'image/*',
 	'video/*',
 	'.doc,.docx,.xml,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
 
+// agregamos las props con valores por defecto para las siguientes variables usadas en nuestro input
+
+const props = withDefaults(
+	defineProps<{
+		accept?: string[];
+		maxMb?: number;
+		multiple?: boolean;
+	}>(),
+	{
+		accept: () => allowedFileTypes,
+		maxMb: 5,
+		multiple: false,
+	}
+);
+
+//agregamos una lista de mimetypes permitidos
+//en la documentacion viene como podemos manejar el atributo que mandamos en accept
+//podemos usar asteriscos como wildcards para definir un grupo de archivos
+//o tambien podemos usar en este caso este codigo que nos permite aceptar archivos de word
+
+//agregamos este emit para enviar al padre las propiedades de fileName y url
+//de los archivos subidos
+//agregamos aquí el tipado
+
+const emit = defineEmits<{
+	'uploaded:files': [
+		files: {
+			filename: string;
+			url: string;
+		}[]
+	];
+}>();
+
 //vamos ahora a definir tamaños máximos para los archivos
 //definimos una variable para manejar en megas el tamaño de archivos
-const maxMB = 5;
+// const maxMB = 5;
 //multiplicamos por 1024*1024 para tener el tamaño en kilobytes y luego en megabytes
-const MAX_FILE_SIZE = maxMB * 1024 * 1024; // 5MB
+// const MAX_FILE_SIZE = maxMB * 1024 * 1024; // 5MB
 
 //definimos una funcion que valide si el archivo es muy grande
 //si pasa el tamaño maximo retornamos true
+//ya no tenemos nuestra constante entonces tomamos los mb de la prop
+//y con esa prop hacemos el calculo para convertir a megas
 function fileIsTooBig(file: File): boolean {
-	return file.size > MAX_FILE_SIZE;
+	// return file.size > MAX_FILE_SIZE;
+	return file.size > props.maxMb * 1024 * 1024;
 }
 
 //agregamos este tipo para poder manejarlo en las computed properties
@@ -106,6 +138,21 @@ async function handleFileSelect(event: Event) {
 		body: formData,
 	});
 
+	//se usa $fetch porque es la forma recomendada en nuxt
+	//para hacer peticiones http, maneja automaticamente
+	//la conversion a json y otros detalles
+
+	//usaremos la conversiona  json del fetch normal para ilustrar el ejemplo
+	//para este caso especifico
+
+	const data = await response.json() as {
+		files: { filename: string; url: string }[];
+	};
+
+	//emitimos el evento con los archivos subidos
+
+	emit('uploaded:files', data.files);
+
 	//respondemos la respuesta
 
 	console.log(response);
@@ -122,10 +169,11 @@ async function handleFileSelect(event: Event) {
 		<!-- input oculto con atributo multiple para seleccionar varios archivos -->
 		<label class="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer">
 			<!-- usamos accept que es la forma descrita en la documentacion para listar el tipo de archivos a aceptar -->
+			<!-- agregamos las referencias a las props -->
 			<input
 				type="file"
-				:accept="allowedFileTypes.join(',')"
-				multiple
+				:accept="accept?.join(',')"
+				:multiple="multiple"
 				@change="handleFileSelect"
 				hidden
 			/>
@@ -163,7 +211,7 @@ async function handleFileSelect(event: Event) {
 
 			<span v-if="fileIsTooBig(file)" class="text-red-500"
 				>File is too big. File must be no larger than
-				{{ maxMB }}MB</span
+				{{ maxMb }}MB</span
 			>
 		</p>
 	</div>
